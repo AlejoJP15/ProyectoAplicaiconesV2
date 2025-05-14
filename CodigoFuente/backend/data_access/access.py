@@ -2,7 +2,8 @@ from backend.connection.db_config import db
 from backend.data_access.models.consult_users import User
 from backend.data_access.models.consult_sesions import Session
 from backend.data_access.models.consult_interaction import EmotionDetected
-from datetime import datetime
+from datetime import datetime, timedelta
+
 from sqlalchemy import func, desc
 
 ## LOGIN USUARIO ADMINISTRADOR
@@ -117,6 +118,47 @@ def is_email_in_use(correo, exclude_user_id=None):
         query = query.filter(User.id_usuario != exclude_user_id)
     return query.first() is not None
 
+MAX_INTENTOS_FALLIDOS = 3
+BLOQUEO_MINUTOS = 1
+
+def verificar_si_usuario_bloqueado(email):
+   
+    usuario = User.query.filter_by(correo=email).first()
+
+    if usuario and usuario.bloqueo_hasta:
+        tiempo_actual = datetime.now()
+        if tiempo_actual < usuario.bloqueo_hasta:
+            # Calcular tiempo restante en segundos
+            tiempo_restante = int((usuario.bloqueo_hasta - tiempo_actual).total_seconds())
+            return True, tiempo_restante  # Devolver segundos en vez de la hora exacta
+        else:
+            # Si ya pasó el tiempo de bloqueo, restablecer valores
+            usuario.intentos_fallidos = 0
+            usuario.bloqueo_hasta = None
+            db.session.commit()
+            return False, 0
+
+    return False, 0  #  Devolver 0 si no está bloqueado
+def registrar_intento_fallido(email):
+ 
+    usuario = User.query.filter_by(correo=email).first()
+
+    if usuario:
+        usuario.intentos_fallidos += 1
+
+        if usuario.intentos_fallidos >= MAX_INTENTOS_FALLIDOS:
+            usuario.bloqueo_hasta = datetime.now() + timedelta(minutes=BLOQUEO_MINUTOS)
+
+        db.session.commit()
+
+def resetear_intentos_fallidos(email):
+    
+    usuario = User.query.filter_by(correo=email).first()
+
+    if usuario:
+        usuario.intentos_fallidos = 0
+        usuario.bloqueo_hasta = None
+        db.session.commit()
 ## INTERACCIONES USUARIOS
 def obtener_emociones_sesion(id_sesion):
     """
