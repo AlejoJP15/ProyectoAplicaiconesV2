@@ -8,12 +8,12 @@ import {
 
 // Importa tus componentes
 import Login from "./shared/login";
-import Register from "./components/register";
+import Register from "./shared/register";
 import MenuUsuario from "./user/menu_usuario";
 import MenuAdmin from "./admin/menu_admin";
-
-
-
+import ForgotPassword from "./shared/ForgotPassword";
+import ResetPassword from "./shared/ResetPassword";
+import ActualizaUser from "./user/ActualizaUser";
 function App() {
   // 1) Definimos estado local para autenticación
   const [auth, setAuth] = useState({
@@ -47,7 +47,9 @@ function App() {
             />
           }
         />
-
+      {/* Rutas para recuperación de contraseña */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         {/* Rutas del login y registro */}
         <Route
           path="/login"
@@ -83,6 +85,17 @@ function App() {
             )
           }
         />
+
+        <Route
+                  path="/user/ActualizaUser"
+                  element={
+                    isAuthenticated && userRole !== "admin" ? (
+                      <ActualizaUser />
+                    ) : (
+                      <Navigate to="/login" />
+                    )
+                  }
+                />
 
       </Routes>
     </Router>
