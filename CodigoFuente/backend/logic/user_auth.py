@@ -48,10 +48,10 @@ def generar_token_recuperacion(email):
     if not usuario:
         return None
 
-    # 🔐 Generar una clave secreta aleatoria por solicitud
+    # Generar una clave secreta aleatoria por solicitud
     secret_key = secrets.token_hex(32)
 
-    # 🔐 Crear el token con esta clave temporal
+    # Crear el token con esta clave temporal
     token = jwt.encode(
         {
             "email": email,
@@ -61,7 +61,7 @@ def generar_token_recuperacion(email):
         algorithm="HS256"
     )
 
-    # 🔐 Guardar el token y la clave en memoria (clave: token, valor: secret_key)
+    # Guardar el token y la clave en memoria (clave: token, valor: secret_key)
     token_storage[token] = secret_key
 
     return token
@@ -104,12 +104,12 @@ def enviar_correo_recuperacion(email, token):
 token_storage = {}
 def actualizar_password_con_token(token, new_password):
     try:
-        # 🔐 Obtener la clave secreta asociada al token
+        # Obtener la clave secreta asociada al token
         secret_key = token_storage.get(token)
         if not secret_key:
             return False, "Token inválido o expirado"
 
-        # 🔐 Decodificar usando la clave con la que se generó el token
+        # Decodificar usando la clave con la que se generó el token
         data = jwt.decode(token, secret_key, algorithms=["HS256"])
         email = data.get("email")
 
@@ -128,7 +128,7 @@ def actualizar_password_con_token(token, new_password):
         success = update_user_password(usuario.id_usuario, hashed_password.decode("utf-8"))
 
         if success:
-            # 🧹 Limpieza: eliminar la clave después del uso
+            # Limpieza: eliminar la clave después del uso
             del token_storage[token]
             return True, "Contraseña actualizada correctamente"
         else:

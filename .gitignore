@@ -8,7 +8,8 @@ node_modules/
 # Ignorar caché de Python
 __pycache__/
 *.pyc
-
+*.pyo
+*.pyd
 # Ignorar archivos de sistema
 .DS_Store
 Thumbs.db
@@ -16,3 +17,4 @@ Thumbs.db
 # Ignorar configuraciones de IDE
 .vscode/
 .idea/
+~$*.docx
