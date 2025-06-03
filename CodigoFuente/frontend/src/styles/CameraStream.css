@@ -186,4 +186,114 @@ body {
     text-align: center;
     font-size: 1rem;
   }
-  
+  .camera-stream-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f0f3f7;
+}
+
+.camera-stream-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 30px;
+}
+
+.video-section {
+  width: 640px;
+  height: 480px;
+  background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-placeholder {
+  color: #999;
+  font-size: 1.5rem;
+  user-select: none;
+}
+
+.emotion-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #333;
+}
+
+.emotion-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-top: 10px;
+  text-transform: capitalize;
+}
+
+.buttons-container {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-start, .btn-stop {
+  background-color: #2e86de;
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  font-size: 1.2rem;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.btn-stop {
+  background-color: #c0392b;
+}
+
+.btn-start:hover {
+  background-color: #1b4f72;
+}
+
+.btn-stop:hover {
+  background-color: #922b21;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.emotion-bubble {
+  display: flex;               /* Para que el ícono y texto estén alineados */
+  align-items: center;         /* Centrar verticalmente */
+  justify-content: center;     /* Centrar horizontalmente */
+  margin: 20px auto;           /* Centrar horizontal y dar espacio arriba y abajo */
+  padding: 20px 40px;          /* Más espacio dentro de la burbuja */
+  font-size: 2.5rem;           /* Tamaño de texto grande */
+  border-radius: 30px;         /* Bordes redondeados */
+  background-color: #f0f0f0;  /* Color de fondo suave */
+  width: fit-content;          /* Que el tamaño se ajuste al contenido */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para resaltar */
+  cursor: default;
+  user-select: none;
+}
+.emotion-bubble svg {
+  font-size: 3rem;             /* Tamaño más grande para el ícono */
+  margin-right: 15px;          /* Espacio entre ícono y texto */
+}

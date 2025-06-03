@@ -14,6 +14,8 @@ import MenuAdmin from "./admin/menu_admin";
 import ForgotPassword from "./shared/ForgotPassword";
 import ResetPassword from "./shared/ResetPassword";
 import ActualizaUser from "./user/ActualizaUser";
+import CameraStream from "./user/CameraStream";
+import MisInteracciones from "./user/mis-interacciones";
 function App() {
   // 1) Definimos estado local para autenticación
   const [auth, setAuth] = useState({
@@ -96,6 +98,27 @@ function App() {
                     )
                   }
                 />
+        <Route
+            path="/mis-interacciones"
+            element={
+              isAuthenticated && userRole !== "admin" ? (
+                <MisInteracciones />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+        />
+
+        <Route
+            path="/camera-stream"
+            element={
+              isAuthenticated && userRole !== "admin" ? (
+                <CameraStream />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+        />
 
       </Routes>
     </Router>
