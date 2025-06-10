@@ -190,7 +190,25 @@ def obtener_emociones_sesion(id_sesion):
         }
         for emocion in emociones
     ]
+def obtener_tendencias_emocionales(inicio, fin, emociones):
+ 
+    query = db.session.query(
+        func.date(EmotionDetected.timestamp).label('fecha'),
+        EmotionDetected.emocion,
+        func.count().label('frecuencia')
+    ).group_by(
+        func.date(EmotionDetected.timestamp),
+        EmotionDetected.emocion
+    ).order_by(
+        func.date(EmotionDetected.timestamp)
+    )
 
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    return query.all()
 ## GUARDAR DATOS RECONOCIMIENTO FACIAL
 def guardar_emocion_bd(session_id, emocion_predominante, confianza, origen="camara"):
     emocion = EmotionDetected(
@@ -323,4 +341,177 @@ def obtener_usuarios():
             "rol": usuario.rol,
         }
         for usuario in usuarios
+    ]
+
+def actualizar_rol_usuario_db(id_usuario, nuevo_rol):
+    
+    usuario = get_user_by_id(id_usuario)
+    if not usuario:
+        return None  # Usuario no encontrado
+    usuario.rol = nuevo_rol
+    db.session.commit()
+    return usuario
+
+def obtener_usuarios_por_emocion(inicio, fin, emociones):
+   
+    query = db.session.query(
+        EmotionDetected.emocion,
+        func.count().label('usuarios')
+    ).group_by(
+        EmotionDetected.emocion
+    ).order_by(
+        func.count().desc()
+    )
+
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    return query.all()
+
+def obtener_tendencias_emocionales(inicio, fin, emociones):
+ 
+    query = db.session.query(
+        func.date(EmotionDetected.timestamp).label('fecha'),
+        EmotionDetected.emocion,
+        func.count().label('frecuencia')
+    ).group_by(
+        func.date(EmotionDetected.timestamp),
+        EmotionDetected.emocion
+    ).order_by(
+        func.date(EmotionDetected.timestamp)
+    )
+
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    return query.all()
+
+def obtener_usuarios_por_emocion(inicio, fin, emociones):
+   
+    query = db.session.query(
+        EmotionDetected.emocion,
+        func.count().label('usuarios')
+    ).group_by(
+        EmotionDetected.emocion
+    ).order_by(
+        func.count().desc()
+    )
+
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    return query.all()
+
+def obtener_distribucion_origen(inicio, fin, emociones):
+ 
+    query = db.session.query(
+        EmotionDetected.origen,
+        func.count().label('total'),
+        func.round(func.count() * 100.0 / func.sum(func.count()).over(), 2).label('porcentaje')
+    ).group_by(
+        EmotionDetected.origen
+    ).order_by(
+        func.count().desc()
+    )
+
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    return query.all()
+
+def obtener_intensidad_promedio(inicio, fin, emociones, agrupacion):
+
+  
+    # Determinar el dialecto de la base de datos (PostgreSQL o MySQL)
+    from sqlalchemy import inspect
+    dialect_name = inspect(db.engine).dialect.name
+
+    # Construir la expresión de agrupación según el dialecto
+    if dialect_name == "postgresql":
+        if agrupacion == "month":
+            trunc_expression = func.date_trunc("month", EmotionDetected.timestamp)
+        elif agrupacion == "year":
+            trunc_expression = func.date_trunc("year", EmotionDetected.timestamp)
+        else:
+            trunc_expression = func.date_trunc("day", EmotionDetected.timestamp)
+    elif dialect_name == "mysql":
+        if agrupacion == "month":
+            # MySQL: Agrupar por año y mes (formato 'YYYY-MM-01')
+            trunc_expression = func.str_to_date(
+                func.concat(
+                    func.year(EmotionDetected.timestamp),
+                    "-",
+                    func.month(EmotionDetected.timestamp),
+                    "-01"
+                ),
+                "%Y-%m-%d"
+            )
+        elif agrupacion == "year":
+            # MySQL: Agrupar por año (formato 'YYYY-01-01')
+            trunc_expression = func.str_to_date(
+                func.concat(func.year(EmotionDetected.timestamp), "-01-01"),
+                "%Y-%m-%d"
+            )
+        else:
+            # MySQL: Agrupar por día
+            trunc_expression = func.date(EmotionDetected.timestamp)
+    else:
+        raise ValueError(f"Dialecto no soportado: {dialect_name}")
+
+    query = db.session.query(
+        trunc_expression.label("fecha_agrupada"),
+        func.round(func.avg(EmotionDetected.intensidad), 2).label("intensidad_promedio")
+    ).group_by(
+        trunc_expression
+    ).order_by(
+        trunc_expression
+    )
+
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    return query.all()
+
+def obtener_distribucion_intensidad(inicio, fin, emociones, agrupacion):
+    """
+    Agrupa emociones detectadas por rangos de intensidad:
+    - Baja: 0.0 – 0.3
+    - Media: 0.31 – 0.7
+    - Alta: 0.71 – 1.0
+    """
+    query = db.session.query(
+        EmotionDetected.intensidad
+    )
+
+    if inicio and fin:
+        query = query.filter(func.date(EmotionDetected.timestamp).between(inicio, fin))
+    if emociones:
+        query = query.filter(EmotionDetected.emocion.in_(emociones))
+
+    intensidades = [row.intensidad for row in query.all()]
+
+    grupos = {"Baja": 0, "Media": 0, "Alta": 0}
+    for intensidad in intensidades:
+        if intensidad < 50:
+            grupos["Baja"] += 1
+        elif intensidad < 70:
+            grupos["Media"] += 1
+        else:
+            grupos["Alta"] += 1
+
+
+    return [
+        {"rango": k, "total": v}
+        for k, v in grupos.items()
+        if v > 0
     ]

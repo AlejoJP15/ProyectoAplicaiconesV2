@@ -8,6 +8,10 @@ from backend.services.e_update import user_bp
 from backend.services.e_auth import auth_bp
 from backend.services.e_emotion_table import emotion_bp
 from backend.services.e_facial_recognition import emotion_recognition_bp
+from backend.services.e_admin_inition import admin_bp
+from backend.services.e_admin_list_users import admin_list_users_bp
+from backend.services.e_admin_estadistica import stats_bp
+
 from dotenv import load_dotenv
 
 app = Flask(__name__)
@@ -23,6 +27,9 @@ app.register_blueprint(user_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(emotion_bp)
 app.register_blueprint(emotion_recognition_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(admin_list_users_bp)
+app.register_blueprint(stats_bp)
 
 # Ruta de prueba
 @app.route('/')

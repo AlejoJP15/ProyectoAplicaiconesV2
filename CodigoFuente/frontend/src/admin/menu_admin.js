@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Line, Pie } from "react-chartjs-2";
-import { FaChartLine, FaUsers, FaChartPie, FaSmile } from "react-icons/fa";
+import { FaChartLine, FaUsers, FaSmile,
+  FaFrown,
+  FaAngry,
+  FaMeh,
+  FaSurprise,
+  FaTired,
+  FaGrinSquint } from "react-icons/fa";
+
 import MenuSuperiorAdmin from "../components/MenuSuperiorAdmin";
 import {
   Chart as ChartJS,
@@ -13,6 +20,8 @@ import {
   PointElement,
   LineElement,
 } from "chart.js";
+import '../styles/menu_admin.css';
+
 
 ChartJS.register(
   ArcElement,
@@ -23,6 +32,74 @@ ChartJS.register(
   PointElement,
   LineElement
 );
+
+const iconoEmocion = {
+  feliz: <FaSmile className="text-yellow-500 text-4xl" />,
+  triste: <FaFrown className="text-blue-500 text-4xl" />,
+  enojado: <FaAngry className="text-red-500 text-4xl" />,
+  neutro: <FaMeh className="text-gray-500 text-4xl" />,
+  sorprendido: <FaSurprise className="text-purple-500 text-4xl" />,
+  temeroso: <FaTired className="text-indigo-500 text-4xl" />,
+  disgustado: <FaGrinSquint className="text-pink-500 text-4xl" />
+};
+// Diccionario de traducción de emociones
+const traducciones = {
+  happy: "feliz",
+  sad: "triste",
+  angry: "enojado",
+  neutral: "neutro",
+  surprised: "sorprendido",
+  fearful: "temeroso",
+  disgusted: "disgustado",
+  feliz: "feliz",
+  triste: "triste",
+  enojado: "enojado",
+  sorprendido: "sorprendido",
+  neutro: "neutro"
+};
+
+const traducir = (emocion) => {
+  return traducciones[emocion.toLowerCase()] || emocion;
+};
+
+// Agrupar emociones por su versión traducida y sumar frecuencia
+const agruparEmociones = (emociones) => {
+  const agrupadas = {};
+
+  emociones.forEach((item) => {
+    const emocionTraducida = traducir(item.emocion);
+    if (!agrupadas[emocionTraducida]) {
+      agrupadas[emocionTraducida] = 0;
+    }
+    agrupadas[emocionTraducida] += item.frecuencia;
+  });
+
+  return Object.entries(agrupadas).map(([emocion, frecuencia]) => ({
+    emocion,
+    frecuencia
+  }));
+};
+
+// Agrupar frecuencias por fecha sumando todas las emociones del mismo día
+const agruparFrecuenciasPorFecha = (datos) => {
+  const acumulador = {};
+
+  datos.forEach((item) => {
+    const fecha = item.fecha;
+    const frecuencia = item.frecuencia;
+
+    if (!acumulador[fecha]) {
+      acumulador[fecha] = 0;
+    }
+
+    acumulador[fecha] += frecuencia;
+  });
+
+  return Object.entries(acumulador).map(([fecha, frecuencia]) => ({
+    fecha,
+    frecuencia
+  }));
+};
 
 function MenuAdmin() {
   const navigate = useNavigate();
@@ -71,28 +148,17 @@ function MenuAdmin() {
     }
   };
 
-  // Datos para el gráfico de pastel (porcentajes de emociones)
-  const dataPieEmociones = estadisticas && Array.isArray(estadisticas.porcentaje_emociones) && estadisticas.porcentaje_emociones.length > 0 ? {
-    labels: estadisticas.porcentaje_emociones.map((item) => item.emocion),
-    datasets: [
-      {
-        label: "Porcentaje de Emociones",
-        data: estadisticas.porcentaje_emociones.map((item) => item.porcentaje),
-        backgroundColor: [
-          "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"
-        ],
-        hoverOffset: 4,
-      },
-    ],
-  } : null;
+  // Procesar emociones para pastel
+  const emocionesAgrupadas = estadisticas?.distribucion_emociones
+    ? agruparEmociones(estadisticas.distribucion_emociones)
+    : [];
 
-  // Datos para el gráfico de pastel (distribución de emociones)
-  const dataPie = estadisticas && Array.isArray(estadisticas.distribucion_emociones) && estadisticas.distribucion_emociones.length > 0 ? {
-    labels: estadisticas.distribucion_emociones.map((item) => item.emocion),
+  const dataPie = emocionesAgrupadas.length > 0 ? {
+    labels: emocionesAgrupadas.map((item) => item.emocion),
     datasets: [
       {
         label: "Frecuencia de Emociones",
-        data: estadisticas.distribucion_emociones.map((item) => item.frecuencia),
+        data: emocionesAgrupadas.map((item) => item.frecuencia),
         backgroundColor: [
           "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"
         ],
@@ -101,107 +167,90 @@ function MenuAdmin() {
     ],
   } : null;
 
-  // Datos para el gráfico de pastel (porcentajes de usuarios por emoción)
-  const dataPieUsuarios = estadisticas && Array.isArray(estadisticas.porcentaje_usuarios_por_emocion) && estadisticas.porcentaje_usuarios_por_emocion.length > 0 ? {
-    labels: estadisticas.porcentaje_usuarios_por_emocion.map((item) => item.emocion),
-    datasets: [
-      {
-        label: "Porcentaje de Usuarios",
-        data: estadisticas.porcentaje_usuarios_por_emocion.map((item) => item.porcentaje),
-        backgroundColor: [
-          "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"
-        ],
-        hoverOffset: 4,
-      },
-    ],
-  } : null;
+  // Procesar tendencias emocionales por fecha (line chart)
+  const tendenciasAgrupadas = estadisticas?.tendencias_emocionales
+    ? agruparFrecuenciasPorFecha(estadisticas.tendencias_emocionales)
+    : [];
 
-  // Datos para el gráfico de líneas (tendencias emocionales)
-  const dataLine = estadisticas && Array.isArray(estadisticas.tendencias_emocionales) && estadisticas.tendencias_emocionales.length > 0 ? {
-    labels: [...new Set(estadisticas.tendencias_emocionales.map((item) => item.fecha))], // Fechas únicas
-    datasets: [
-      {
-        label: "Frecuencia de Emociones",
-        data: estadisticas.tendencias_emocionales.map((item) => item.frecuencia),
-        borderColor: "#36A2EB",
-        backgroundColor: "rgba(54, 162, 235, 0.2)",
-        tension: 0.4,
-      },
-    ],
+  const dataLine = tendenciasAgrupadas.length > 0 ? {
+    labels: tendenciasAgrupadas.map((item) => item.fecha),
+    datasets: [{
+      label: "Frecuencia total de emociones",
+      data: tendenciasAgrupadas.map((item) => item.frecuencia),
+      borderColor: "#36A2EB",
+      backgroundColor: "rgba(54, 162, 235, 0.2)",
+      tension: 0.4,
+    }],
   } : null;
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <MenuSuperiorAdmin />  {/* Aquí se usa el menú reutilizable */}
-      <div className="contenido-pagina">
-        {/* Contenido de la página */}
-      </div>
+  <div className="bg-gray-100 min-h-screen">
+    <MenuSuperiorAdmin />
+    <div className="container">
+      <h2 className="text-2xl font-bold mb-6">Dashboard del Administrador</h2>
 
-      {/* Contenido Principal */}
-      <div className="container mx-auto p-6 space-y-6">
-        <h2 className="text-2xl font-bold mb-4">Dashboard del Administrador</h2>
+      {error && <p className="text-red-500 bg-red-100 p-3 rounded shadow">{error}</p>}
 
-        {error && <p className="text-red-500 bg-red-100 p-3 rounded shadow">{error}</p>}
-        {estadisticas ? (
-          <>
-            {/* Tarjetas de Métricas */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white shadow-md p-6 rounded-lg flex items-center space-x-4">
-                <FaChartLine className="text-blue-600 text-4xl" />
-                <div>
-                  <h3 className="text-lg font-semibold">Total de Sesiones</h3>
-                  <p className="text-2xl font-bold">{estadisticas.total_sesiones}</p>
-                </div>
+      {estadisticas ? (
+        <>
+          {/* Tarjetas */}
+          <div className="dashboard-grid">
+            <div className="dashboard-card">
+              <FaChartLine className="text-blue-600 text-4xl" />
+              <div>
+                <h3>Total de Sesiones en las que el Modelo fué usado </h3>
+                <p>{estadisticas.total_sesiones}</p>
               </div>
-              <div className="bg-white shadow-md p-6 rounded-lg flex items-center space-x-4">
-                <FaUsers className="text-green-600 text-4xl" />
-                <div>
-                  <h3 className="text-lg font-semibold">Usuarios Registrados</h3>
-                  <p className="text-2xl font-bold">{estadisticas.total_usuarios}</p>
-                </div>
+            </div>
+            <div className="dashboard-card">
+              <FaUsers className="text-green-600 text-4xl" />
+              <div>
+                <h3>Usuarios Registrados</h3>
+                <p>{estadisticas.total_usuarios}</p>
               </div>
-              <div className="bg-white shadow-md p-6 rounded-lg flex items-center space-x-4">
+            </div>
+            <div className="dashboard-card">
+              {iconoEmocion[traducir(estadisticas.emocion_predominante)] || (
                 <FaSmile className="text-yellow-600 text-4xl" />
-                <div>
-                  <h3 className="text-lg font-semibold">Emoción Predominante</h3>
-                  <p className="text-2xl font-bold">{estadisticas.emocion_predominante}</p>
-                </div>
+              )}
+              <div>
+                <h3>Emoción Predominante</h3>
+                <p>{traducir(estadisticas.emocion_predominante)}</p>
               </div>
             </div>
+          </div>
 
-            {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
-              {/* Gráfico de Pastel (Emociones) */}
-              <div className="bg-white shadow-md p-6 rounded-lg flex flex-col items-center">
-                <h3 className="text-xl font-semibold mb-4 text-gray-700">Distribución de Emociones</h3>
-                <div className="w-full h-[400px] flex justify-center">
-                  {dataPie ? (
-                    <Pie data={dataPie} options={{ responsive: true, maintainAspectRatio: false }} />
-                  ) : (
-                    <p className="text-gray-500">No hay datos disponibles para el gráfico de pastel.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Gráfico de Líneas */}
-              <div className="bg-white shadow-md p-6 rounded-lg flex flex-col items-center">
-                <h3 className="text-xl font-semibold mb-4 text-gray-700">Tendencias Emocionales</h3>
-                <div className="w-full h-[400px] flex justify-center">
-                  {dataLine ? (
-                    <Line data={dataLine} options={{ responsive: true, maintainAspectRatio: false }} />
-                  ) : (
-                    <p className="text-gray-500">No hay datos disponibles para el gráfico de líneas.</p>
-                  )}
-                </div>
+                    {/* Gráficos */}
+          <div className="charts-column">
+            <div className="chart-card">
+              <h3>Distribución de Emociones</h3>
+              <div className="chart-wrapper">
+                {dataPie ? (
+                  <Pie data={dataPie} options={{ responsive: true, maintainAspectRatio: false }} />
+                ) : (
+                  <p className="text-gray-500 text-center">No hay datos para el gráfico de pastel.</p>
+                )}
               </div>
             </div>
-          </>
-        ) : (
-          !error && <p className="text-gray-500">Cargando estadísticas...</p>
-        )}
-      </div>
+            <div className="chart-card mt-8">
+              <h3>Cantidad de emociones predichas por dia</h3>
+              <div className="chart-wrapper">
+                {dataLine ? (
+                  <Line data={dataLine} options={{ responsive: true, maintainAspectRatio: false }} />
+                ) : (
+                  <p className="text-gray-500 text-center">No hay datos para el gráfico de líneas.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        !error && <p className="text-gray-500 text-center">Cargando estadísticas...</p>
+      )}
     </div>
-  );
+  </div>
+);
+
 }
 
 export default MenuAdmin;

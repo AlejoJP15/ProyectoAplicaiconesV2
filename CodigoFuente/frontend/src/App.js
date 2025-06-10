@@ -11,6 +11,8 @@ import Login from "./shared/login";
 import Register from "./shared/register";
 import MenuUsuario from "./user/menu_usuario";
 import MenuAdmin from "./admin/menu_admin";
+import ListaUsuarios from "./admin/gestion_usuario_admin";
+import VisualizarEstadisticas from "./admin/visualizar_estadisticas_admin";
 import ForgotPassword from "./shared/ForgotPassword";
 import ResetPassword from "./shared/ResetPassword";
 import ActualizaUser from "./user/ActualizaUser";
@@ -87,6 +89,16 @@ function App() {
             )
           }
         />
+        <Route
+                  path="/admin/visualizar_estadisticas_admin"
+                  element={
+                    isAuthenticated && userRole === "admin" ? (
+                      <VisualizarEstadisticas />
+                    ) : (
+                      <Navigate to="/login" />
+                    )
+                  }
+          />
 
         <Route
                   path="/user/ActualizaUser"

@@ -1,0 +1,131 @@
+/* Estructura general */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  margin: 0;
+  padding: 0;
+}
+
+/* Contenedor principal */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 2rem;
+}
+
+/* Título principal */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  text-align: center;
+}
+
+/* Tarjetas visuales */
+.card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+/* Gráficos */
+.chart-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-container canvas {
+  max-width: 100%;
+  height: 350px !important;
+}
+
+/* Filtros */
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Inputs */
+select,
+textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  font-size: 1rem;
+  transition: border-color 0.3s ease-in-out;
+}
+
+select:focus,
+textarea:focus {
+  border-color: #2563eb;
+  outline: none;
+  background-color: #ffffff;
+}
+
+/* Botones */
+.btn-primary,
+button[type="submit"],
+button {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease-in-out;
+}
+
+.btn-primary:hover,
+button:hover {
+  background-color: #1e40af;
+  cursor: pointer;
+}
+
+/* Checkbox y texto */
+label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+input[type="checkbox"] {
+  accent-color: #2563eb;
+  margin-right: 0.5rem;
+}
+
+/* Sección de comentarios */
+textarea {
+  resize: vertical;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  .chart-container canvas {
+    height: 300px !important;
+  }
+}

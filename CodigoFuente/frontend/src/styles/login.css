@@ -23,6 +23,7 @@
   margin-bottom: 20px;
   font-weight: bold;
   text-align: center;
+  color: white;
 }
 .success-message {
   color: #1eef03;
@@ -115,12 +116,14 @@
   display: flex;
   justify-content: space-between;
   margin-top: 15px;
+  
 }
 
 .link {
   font-size: 1rem;
-  color: #4f46e5;
+  color: white;
   text-decoration: none;
+  
 }
 
 .link:hover {
