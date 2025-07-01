@@ -3,7 +3,7 @@ from backend.data_access.models.consult_users import User
 from backend.data_access.models.consult_sesions import Session
 from backend.data_access.models.consult_interaction import EmotionDetected
 from datetime import datetime, timedelta
-
+from backend.logic.config import cargar_parametros
 from sqlalchemy import func, desc
 
 ## LOGIN USUARIO ADMINISTRADOR
@@ -118,8 +118,19 @@ def is_email_in_use(correo, exclude_user_id=None):
         query = query.filter(User.id_usuario != exclude_user_id)
     return query.first() is not None
 
-MAX_INTENTOS_FALLIDOS = 3
-BLOQUEO_MINUTOS = 1
+def get_parametros_login():
+    parametros = cargar_parametros()
+    try:
+        intentos = int(parametros.get("intentos_fallidos_maximos", 3))
+    except (ValueError, TypeError):
+        intentos = 3
+
+    try:
+        bloqueo = int(parametros.get("tiempo_bloqueo_minutos", 1))
+    except (ValueError, TypeError):
+        bloqueo = 1
+
+    return intentos, bloqueo
 
 def verificar_si_usuario_bloqueado(email):
    
@@ -139,14 +150,16 @@ def verificar_si_usuario_bloqueado(email):
             return False, 0
 
     return False, 0  #  Devolver 0 si no está bloqueado
+
 def registrar_intento_fallido(email):
- 
     usuario = User.query.filter_by(correo=email).first()
 
     if usuario:
         usuario.intentos_fallidos += 1
 
-        if usuario.intentos_fallidos >= MAX_INTENTOS_FALLIDOS:
+        MAX_INTENTOS, BLOQUEO_MINUTOS = get_parametros_login()
+
+        if usuario.intentos_fallidos >= MAX_INTENTOS:
             usuario.bloqueo_hasta = datetime.now() + timedelta(minutes=BLOQUEO_MINUTOS)
 
         db.session.commit()
@@ -515,3 +528,6 @@ def obtener_distribucion_intensidad(inicio, fin, emociones, agrupacion):
         for k, v in grupos.items()
         if v > 0
     ]
+
+def obtener_sesiones_recientes(limit=5):
+    return db.session.query(Session).order_by(desc(Session.fecha)).limit(limit).all()

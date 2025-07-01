@@ -18,6 +18,7 @@ import ResetPassword from "./shared/ResetPassword";
 import ActualizaUser from "./user/ActualizaUser";
 import CameraStream from "./user/CameraStream";
 import MisInteracciones from "./user/mis-interacciones";
+import ParametrosSistemaAdmin from "./admin/ParametrosSistemaAdmin";
 function App() {
   // 1) Definimos estado local para autenticación
   const [auth, setAuth] = useState({
@@ -130,6 +131,26 @@ function App() {
                 <Navigate to="/login" />
               )
             }
+        />
+        <Route
+          path="/admin/gestion_usuario_admin"
+          element={
+            isAuthenticated && userRole === "admin" ? (
+              <ListaUsuarios />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/admin/parametros_sistema_admin"
+          element={
+            isAuthenticated && userRole === "admin" ? (
+              <ParametrosSistemaAdmin />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
 
       </Routes>

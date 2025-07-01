@@ -31,6 +31,9 @@ const MenuSuperiorAdmin = () => {
           <li className="navbar-item" onClick={() => navigate("/admin/gestion_usuario_admin")}>
             Gestionar Usuarios
           </li>
+          <li className="navbar-item" onClick={() => navigate("/admin/parametros_sistema_admin")}>
+            Parámetros del Sistema
+          </li>
           <li className="navbar-item" onClick={() => navigate("/admin/visualizar_estadisticas_admin")}>
             Visualizar Estadísticas
           </li>

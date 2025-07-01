@@ -50,10 +50,15 @@ function GeneradorTextoChatbot() {
   }, [camaraActiva]);
 
   // Inicia la cámara (stream)
-  const iniciarCamara = () => {
-    setCamaraActiva(true);
-    setTimestamp(Date.now());
-  };
+    const iniciarCamara = () => {
+      if (!sessionId) {
+        alert("No hay sesión activa. Inicia sesión de nuevo.");
+        window.location.href = "http://localhost:3000/login";
+        return;
+      }
+      setCamaraActiva(true);
+      setTimestamp(Date.now());
+    };
 
   // Detiene la cámara y guarda emoción en la BD (opcionalmente)
   const detenerCamara = async () => {

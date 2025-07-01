@@ -1,276 +1,238 @@
 import React, { useEffect, useState } from "react";
+import {
+  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
+  TextField, Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, Paper, IconButton, Select, MenuItem, InputLabel, FormControl,
+  Typography, Grid
+} from "@mui/material";
+import { Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import MenuSuperiorAdmin from "../components/MenuSuperiorAdmin";
+
 function ListaUsuarios() {
   const navigate = useNavigate();
   const sessionId = localStorage.getItem("id_sesion");
- 
+
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
- const [modalAbierto, setModalAbierto] = useState(false);
+  const [modalAbierto, setModalAbierto] = useState(false);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [nuevoRol, setNuevoRol] = useState("");
- 
+  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevoCorreo, setNuevoCorreo] = useState("");
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/lista_usuarios", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
- 
-      if (!response.ok) {
-        throw new Error("Error en la respuesta del servidor");
-      }
- 
+      const response = await fetch("http://localhost:5000/lista_usuarios");
+      if (!response.ok) throw new Error("Error al obtener usuarios");
       const data = await response.json();
-      console.log("Datos recibidos del servidor:", data);
- 
-      if (!Array.isArray(data)) {
-        throw new Error("Los datos recibidos no son un array de usuarios");
-      }
- 
       setUsuarios(data);
-    } catch (error) {
-      console.error("Error al obtener usuarios:", error);
-      setError(error.message || "No se pudieron cargar los usuarios");
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
- 
+
+  useEffect(() => { fetchUsuarios(); }, []);
+
   const eliminar_usuario = async (id_usuario) => {
-    const confirmar = window.confirm("¿Estás seguro de eliminar este usuario?");
-    if (!confirmar) return;
+    if (!window.confirm("¿Estás seguro de eliminar este usuario?")) return;
     try {
       const response = await fetch("http://localhost:5000/lista_usuarios", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_usuario }),
       });
- 
-      if (!response.ok) {
-        throw new Error("Error al eliminar Usuario");
-      }
- 
-      const data = await response.json();
-      console.log(data.message);
-      setUsuarios((prevUsuarios) =>
-        prevUsuarios.filter((u) => u.id_usuario !== id_usuario)
-      );
-    } catch (error) {
-      console.error("Error al eliminar usuario:", error);
-      setError(error.message || "No se pudo eliminar el usuario");
+      if (!response.ok) throw new Error("Error al eliminar usuario");
+      setUsuarios((prev) => prev.filter((u) => u.id_usuario !== id_usuario));
+    } catch (err) {
+      setError(err.message);
     }
   };
+
   const editarRolUsuario = (usuario) => {
     setUsuarioEditando(usuario);
+    setNuevoNombre(usuario.nombre);
+    setNuevoCorreo(usuario.correo);
     setNuevoRol(usuario.rol);
     setModalAbierto(true);
   };
- 
+
   const cerrarModal = () => {
     setModalAbierto(false);
     setUsuarioEditando(null);
+    setNuevoNombre("");
+    setNuevoCorreo("");
     setNuevoRol("");
   };
-  const actualizarRolUsuario = async () => {
-    if (!usuarioEditando || !nuevoRol) return;
- 
+
+  const actualizarUsuario = async () => {
+    if (!usuarioEditando || !sessionId) {
+      setError("Faltan datos o sesión");
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:5000/usuarios/${usuarioEditando.id_usuario}/rol`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rol: nuevoRol }),
-      });
- 
-      if (!response.ok) {
-        throw new Error("Error al actualizar el rol del usuario");
-      }
- 
-      const data = await response.json();
-      console.log(data.message);
- 
-      setUsuarios((prevUsuarios) =>
-        prevUsuarios.map((u) =>
-          u.id_usuario === usuarioEditando.id_usuario ? { ...u, rol: nuevoRol } : u
+      // 1. Actualizar nombre y correo
+      const res1 = await fetch(`http://localhost:5000/usuarios/${usuarioEditando.id_usuario}/datos`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombre: nuevoNombre,
+            email: nuevoCorreo,
+          }),
+        });
+      if (!res1.ok) throw new Error("Error al actualizar nombre o correo");
+
+      // 2. Actualizar rol
+      // 2. Solo actualiza el rol si cambió
+        if (nuevoRol !== usuarioEditando.rol) {
+          const res2 = await fetch(`http://localhost:5000/usuarios/${usuarioEditando.id_usuario}/rol`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rol: nuevoRol }),
+          });
+
+          if (!res2.ok) throw new Error("Error al actualizar rol");
+        }
+
+
+      setUsuarios((prev) =>
+        prev.map((u) =>
+          u.id_usuario === usuarioEditando.id_usuario
+            ? { ...u, nombre: nuevoNombre, correo: nuevoCorreo, rol: nuevoRol }
+            : u
         )
       );
- 
       cerrarModal();
-    } catch (error) {
-      console.error("Error al actualizar el rol del usuario:", error);
-      setError(error.message || "No se pudo actualizar el rol del usuario");
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
     }
   };
- 
-  const eliminar_tabla_bot = async () => {
-    const confirmar = window.confirm("¿Estás seguro de eliminar la tabla de interacción del chatbot?");
-    if(!confirmar) return;
- 
-    try {
-      const response = await fetch("http://localhost:5000/delete_interaction_chatbot", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
- 
-      if (!response.ok) {
-        throw new Error("Error al eliminar la tabla de interacción del chatbot");
-      }
-      const data = await response.json();
-      console.log(data.message);
-    } catch (error) {
-      console.error("Error al eliminar la tabla de interacción del chatbot:", error);
-      setError(error.message || "No se pudo eliminar la tabla de interacción del chatbot");
-    }
-  };
- 
-  useEffect(() => {
-    fetchUsuarios();
-  }, []);
- 
-  const filteredUsuarios = usuarios.filter(
-    (usuario) =>
-      usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.correo.toLowerCase().includes(searchTerm.toLowerCase())
+
+  const filteredUsuarios = usuarios.filter((usuario) =>
+    usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    usuario.correo.toLowerCase().includes(searchTerm.toLowerCase())
   );
- 
+
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <MenuSuperiorAdmin />  {/* Aquí se usa el menú reutilizable */}
-      <div className="contenido-pagina">
-        {/* Contenido de la página */}
-      </div>
- 
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Gestión de Usuarios</h1>
- 
-        {/* Barra de búsqueda */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o correo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-          />
-        </div>
- 
-        {/* Botón para eliminar todos los datos de la tabla interacciones_chatbot */}
-        <div className="mb-6">
-          <button
-            onClick={eliminar_tabla_bot}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200"
-          >
-            Eliminar Datos de Interacciones Chatbot
-          </button>
-        </div>
- 
-        {loading && (
-          <p className="text-gray-500 text-center">Cargando usuarios...</p>
-        )}
-        {error && (
-          <p className="text-red-500 text-center bg-red-50 p-4 rounded mb-4">
-            {error}
-          </p>
-        )}
-        {!loading && !error && filteredUsuarios.length > 0 && (
-          <div className="flex flex-col mt-4">
-            <div className="overflow-x-auto sm:-mx-6 lg:-mx-8">
-              <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-                <div className="overflow-hidden shadow-sm rounded-lg">
-                  <table className="min-w-full text-left text-sm font-light">
-                    <thead className="border-b bg-white font-medium">
-                      <tr>
-                        <th scope="col" className="px-6 py-4 text-gray-700">ID</th>
-                        <th scope="col" className="px-6 py-4 text-gray-700">Nombre</th>
-                        <th scope="col" className="px-6 py-4 text-gray-700">Correo</th>
-                        <th scope="col" className="px-6 py-4 text-gray-700">Rol</th>
-                        <th scope="col" className="px-6 py-4 text-center text-gray-700">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredUsuarios.map((usuario, index) => (
-                        <tr
-                          key={usuario.id_usuario}
-                          className={`border-b hover:bg-gray-50 transition duration-200 ${
-                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          }`}
-                        >
-                          <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-700">
-                            {usuario.id_usuario}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-gray-600">
-                            {usuario.nombre}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-gray-600">
-                            {usuario.correo}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-gray-600">
-                            {usuario.rol}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-center">
-                            <button
-                              onClick={() => eliminar_usuario(usuario.id_usuario)}
-                              className="bg-red-400 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition duration-200"
-                            >
-                              Eliminar
-                            </button>
-                            <button
-                              onClick={() => editarRolUsuario(usuario)}
-                              className="bg-blue-400 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition duration-200"
-                              >
-                              Editar Rol
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {!loading && !error && filteredUsuarios.length === 0 && (
-          <p className="text-gray-500 text-center mt-6">
-            No hay usuarios registrados.
-          </p>
-        )}
-      </div>
-      {modalAbierto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Editar Rol de {usuarioEditando.nombre}</h2>
-            <select
-              value={nuevoRol}
-              onChange={(e) => setNuevoRol(e.target.value)}
-              className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent mb-4"
-            >
-              <option value="usuario">usuario</option>
-              <option value="admin">admin</option>
-            </select>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={cerrarModal}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f3f4f6" }}>
+      <MenuSuperiorAdmin />
+      <Box maxWidth="lg" mx="auto" p={4}>
+        <Typography variant="h4" fontWeight="bold" align="center" mb={4}>
+          Gestión de Usuarios
+        </Typography>
+
+        <Grid container spacing={2} alignItems="center" mb={3}>
+          <Grid item xs={12} md={8}>
+            <TextField
+              fullWidth
+              label="Buscar por nombre o correo"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              variant="outlined"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Mostrar</InputLabel>
+              <Select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(e.target.value)}
+                label="Mostrar"
               >
-                Cancelar
-              </button>
-              <button
-                onClick={actualizarRolUsuario}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+                {[5, 10, 25, 50].map((num) => (
+                  <MenuItem key={num} value={num}>{num}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        {loading && <Typography align="center">Cargando usuarios...</Typography>}
+        {error && <Typography color="error" align="center">{error}</Typography>}
+
+        {!loading && !error && (
+          <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>Correo</TableCell>
+                  <TableCell>Rol</TableCell>
+                  <TableCell align="center">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredUsuarios.slice(0, itemsPerPage).map((usuario) => (
+                  <TableRow key={usuario.id_usuario} hover>
+                    <TableCell>{usuario.id_usuario}</TableCell>
+                    <TableCell>{usuario.nombre}</TableCell>
+                    <TableCell>{usuario.correo}</TableCell>
+                    <TableCell>{usuario.rol}</TableCell>
+                    <TableCell align="center">
+                      <IconButton color="primary" onClick={() => editarRolUsuario(usuario)}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => eliminar_usuario(usuario.id_usuario)}>
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        {/* MODAL DE EDICIÓN */}
+        <Dialog open={modalAbierto} onClose={cerrarModal}>
+          <DialogTitle>Editar Usuario</DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              margin="dense"
+              label="Nombre"
+              value={nuevoNombre}
+              onChange={(e) => setNuevoNombre(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              margin="dense"
+              label="Correo"
+              type="email"
+              value={nuevoCorreo}
+              onChange={(e) => setNuevoCorreo(e.target.value)}
+            />
+            <FormControl fullWidth margin="dense">
+              <InputLabel>Rol</InputLabel>
+              <Select
+                value={nuevoRol}
+                onChange={(e) => setNuevoRol(e.target.value)}
+                label="Rol"
               >
-                Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+                <MenuItem value="usuario">usuario</MenuItem>
+                <MenuItem value="admin">admin</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={cerrarModal} color="inherit">Cancelar</Button>
+            <Button onClick={actualizarUsuario} variant="contained" color="success">
+              Guardar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Box>
   );
 }
- 
+
 export default ListaUsuarios;

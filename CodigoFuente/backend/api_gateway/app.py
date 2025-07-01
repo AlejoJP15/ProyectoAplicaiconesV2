@@ -11,6 +11,8 @@ from backend.services.e_facial_recognition import emotion_recognition_bp
 from backend.services.e_admin_inition import admin_bp
 from backend.services.e_admin_list_users import admin_list_users_bp
 from backend.services.e_admin_estadistica import stats_bp
+from backend.services.e_config import config_bp
+from backend.services.e_email_config import email_config_bp
 
 from dotenv import load_dotenv
 
@@ -30,6 +32,8 @@ app.register_blueprint(emotion_recognition_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(admin_list_users_bp)
 app.register_blueprint(stats_bp)
+app.register_blueprint(config_bp)
+app.register_blueprint(email_config_bp)
 
 # Ruta de prueba
 @app.route('/')

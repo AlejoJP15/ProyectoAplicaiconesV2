@@ -43,17 +43,19 @@ def detectar_emocion_api():
 
 @emotion_recognition_bp.route('/stop_stream', methods=['POST'])
 def stop_stream_endpoint():
-    """
-    Detiene la transmisión de la cámara y guarda la emoción predominante en la BD.
-    """
     stop_stream()
 
     data = request.get_json() or {}
     session_id = data.get("id_sesion")
     origen = data.get("origen", "facial")
 
-    emocion_predominante, confianza = get_predominant_emotion()
-    if emocion_predominante:
-        guardar_emocion_bd(session_id, emocion_predominante, confianza, origen)
+    if not session_id:
+        return jsonify({"message": "No se recibió session_id. No se guardó la emoción."}), 400
 
-    return jsonify({"message": "Cámara apagada"})
+    emocion_predominante, confianza = get_predominant_emotion()
+
+    if not emocion_predominante:
+        return jsonify({"message": "No se detectó emoción para guardar."}), 200
+
+    guardar_emocion_bd(session_id, emocion_predominante, confianza, origen)
+    return jsonify({"message": "Cámara apagada y emoción guardada."})

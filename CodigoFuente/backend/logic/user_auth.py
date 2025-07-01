@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 from backend.data_access.access import get_user_by_email, update_user_password
+from backend.logic.config import cargar_parametros
 import secrets
 
 # 🔹 Cargar variables de entorno desde .env
@@ -52,14 +53,21 @@ def generar_token_recuperacion(email):
     secret_key = secrets.token_hex(32)
 
     # Crear el token con esta clave temporal
+    parametros = cargar_parametros()
+    try:
+        duracion = int(parametros.get("duracion_token_recuperacion_minutos", 60))
+    except (ValueError, TypeError):
+        duracion = 60
+
+    # Crear el token con esta clave temporal
     token = jwt.encode(
         {
             "email": email,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=duracion)
         },
         secret_key,
         algorithm="HS256"
-    )
+)
 
     # Guardar el token y la clave en memoria (clave: token, valor: secret_key)
     token_storage[token] = secret_key

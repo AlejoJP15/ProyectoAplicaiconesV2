@@ -1,0 +1,5 @@
+{
+    "duracion_token_recuperacion_minutos": 60,
+    "intentos_fallidos_maximos": 5,
+    "tiempo_bloqueo_minutos": 2
+}

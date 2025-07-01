@@ -8,7 +8,7 @@ from collections import Counter
 
 
 
-MODEL_PATH = r"C:\Users\alejo\OneDrive\Documentos\EntrenamientoTesis\mejor_modelo_xception_fer2013.keras"
+MODEL_PATH = r"C:\Users\alejo\OneDrive\Documentos\EntrenamientoTesis\mejor_modelo_xception_fer2013_C1.keras"
 
 
 # Variables globales. Se puede refinar el manejo con una clase/objeto si prefieres.
